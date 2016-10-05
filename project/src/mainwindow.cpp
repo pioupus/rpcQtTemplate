@@ -110,8 +110,7 @@ void MainWindow::on_btnConnect_clicked()
 					serialThread->close();
 				}
 				else{
-					serialThread->rpcSetStandbyEnabled(false);
-					qDebug() << "opened";
+                    qDebug() << "opened";
 				}
 
             }else{

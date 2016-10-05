@@ -128,7 +128,8 @@ void SerialThread::sendByteData(QByteArray data)
 }
 
 
-bool SerialThread::rpcIsCorrectHash()
+
+bool SerialThread::rpcIsCorrectHash(void)
 {
 	unsigned char hash[16];
 	unsigned char start_command_id;

@@ -6,8 +6,10 @@
 #include <QtSerialPort/QSerialPort>
 #include <QDebug>
 #include "rpc_transmission/server/app/mcu2qt.h"
+#include "rpc_transmission/server/generated_general/RPC_types.h"
 
 struct SerialThread;
+
 class SerialWorker : public QObject
 {
     Q_OBJECT
@@ -54,13 +56,14 @@ public:
 
     void rpcSetTemperature(float temperature);
     void sendByteData(QByteArray data);
+    bool rpcIsCorrectHash(void);
 signals:
 
     void openPort(QString name, int baudrate);
     void closePort(void);
     bool isPortOpened();
     void sendData(QByteArray data);
-    bool rpcIsCorrectHash();
+
     void updateADC(float adc1);
     void updateKeyState(rpcKeyStatus_t keyState);
 
