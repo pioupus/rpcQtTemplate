@@ -104,8 +104,16 @@ void MainWindow::on_btnConnect_clicked()
             qDebug() << "open" << serialPortName << baudrate;
             serialThread->open(serialPortName,baudrate);
 
-            if (serialThread->isOpen()){
-                qDebug() << "opened";
+			if (serialThread->isOpen()){
+				if (!serialThread->rpcIsCorrectHash()){
+					qDebug() << "opened but incorrect hash, closing";
+					serialThread->close();
+				}
+				else{
+					serialThread->rpcSetStandbyEnabled(false);
+					qDebug() << "opened";
+				}
+
             }else{
                 qDebug() << "still closed";
             }

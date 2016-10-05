@@ -43,7 +43,7 @@ SerialThread::SerialThread(QObject *parent) :
     QObject(parent)
 {
 
-    thread = new QThread();
+    thread = new QThread(this);
 
     serialWorker = new SerialWorker(this);
     serialWorkerForRPCFunc = serialWorker;
@@ -58,10 +58,10 @@ SerialThread::SerialThread(QObject *parent) :
     connect(serialWorker,SIGNAL(updateADC(float)),this,SIGNAL(updateADC(float)));
     connect(serialWorker,SIGNAL(updateKeyState(rpcKeyStatus_t)),this,SIGNAL(updateKeyState(rpcKeyStatus_t)));
 
-    connect(this, SIGNAL(openPort(QString, int)), serialWorker, SLOT(openPort(QString, int)));
-    connect(this, SIGNAL(closePort()), serialWorker, SLOT(closePort()));
-    connect(this, SIGNAL(isPortOpened()), serialWorker, SLOT(isPortOpened()));
-    connect(this, SIGNAL(sendData(QByteArray)), serialWorker, SLOT(sendData(QByteArray)));
+    connect(this, SIGNAL(openPort(QString, int)), serialWorker, SLOT(openPort(QString, int)), Qt::BlockingQueuedConnection);
+    connect(this, SIGNAL(closePort()), serialWorker, SLOT(closePort()), Qt::BlockingQueuedConnection);
+    connect(this, SIGNAL(isPortOpened()), serialWorker, SLOT(isPortOpened()), Qt::BlockingQueuedConnection);
+    connect(this, SIGNAL(sendData(QByteArray)), serialWorker, SLOT(sendData(QByteArray)), Qt::QueuedConnection);
 
 
 
@@ -92,7 +92,7 @@ bool SerialThread::isOpen()
 
 void SerialThread::rpcSetTemperature(float temperature)
 {
-    uint16_t temp_returnvalue;
+    uint16_t temp_returnvalue = -1;
     RPC_RESULT result;
     rpcLEDStatus_t ledStatus = rpcLEDStatus_none;
     if (temperature > 10){
@@ -128,6 +128,17 @@ void SerialThread::sendByteData(QByteArray data)
 }
 
 
+bool SerialThread::rpcIsCorrectHash()
+{
+	unsigned char hash[16];
+	unsigned char start_command_id;
+	uint16_t version;
+	auto result = RPC_TRANSMISSION_get_hash(hash, &start_command_id, &version);
+	if (result != RPC_SUCCESS){
+		return false;
+	}
+	return memcmp(hash, RPC_TRANSMISSION_HASH, RPC_TRANSMISSION_HASH_SIZE) == 0;
+}
 
 SerialWorker::SerialWorker(SerialThread *serialThread, QObject *parent):
     QObject(parent)
@@ -175,6 +186,7 @@ bool SerialWorker::isPortOpened()
 void SerialWorker::sendData(QByteArray data)
 {
     serialport->write(data);
+	qDebug() << ">>>" << data;
 }
 
 
@@ -190,6 +202,9 @@ void SerialWorker::on_readyRead()
     //qDebug() << "on read:" << QThread::currentThreadId();
     QByteArray inbuffer = serialport->readAll();
 
+	if (!inbuffer.isEmpty()){
+		qDebug() << "<<<" << inbuffer;
+	}
     if (inbuffer.count() == 512){
         qDebug() << "Rechner langsam";
     }

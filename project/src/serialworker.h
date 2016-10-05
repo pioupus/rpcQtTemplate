@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QThread>
 #include <QtSerialPort/QSerialPort>
+#include <QDebug>
 #include "rpc_transmission/server/app/mcu2qt.h"
 
 struct SerialThread;
@@ -59,7 +60,7 @@ signals:
     void closePort(void);
     bool isPortOpened();
     void sendData(QByteArray data);
-
+    bool rpcIsCorrectHash();
     void updateADC(float adc1);
     void updateKeyState(rpcKeyStatus_t keyState);
 
@@ -69,5 +70,23 @@ public slots:
 };
 
 extern SerialWorker *serialWorkerForRPCFunc;
+
+inline QDebug &operator << (QDebug &&qd, RPC_RESULT result){
+    switch (result){
+    case RPC_SUCCESS:
+        qd << "RPC success";
+        break;
+    case RPC_FAILURE:
+        qd << "RPC failure";
+        break;
+    case RPC_COMMAND_UNKNOWN:
+        qd << "RPC command unknown";
+        break;
+    case RPC_COMMAND_INCOMPLETE:
+        qd << "RPC command incomplete";
+        break;
+    }
+    return qd;
+}
 
 #endif // SERIALWORKER_H
